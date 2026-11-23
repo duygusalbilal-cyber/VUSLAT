@@ -1,500 +1,394 @@
-<!DOCTYPE html>
-<html lang="tr" data-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VUSLAT</title>
-    <link href="https://googleapis.com" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
-            --bg-elevated: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --text-muted: #9ca3af;
-            --border-color: #e5e7eb;
-            --brand-gradient: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f59e0b 100%);
-            --brand-primary: #6366f1;
-            --like-color: #ef4444;
-            --hover-bg: #f3f4f6;
-            --sidebar-width: 240px;
-            --sidebar-tablet: 74px;
-            --header-height: 58px;
-            --bottom-nav-height: 56px;
-        }
-
-        [data-theme="dark"] {
-            --bg-primary: #0b0d12;
-            --bg-secondary: #12151e;
-            --bg-elevated: #171b26;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --text-muted: #6b7280;
-            --border-color: #232836;
-            --hover-bg: #1e2330;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            overflow-x: hidden;
-        }
-
-        button { border: none; background: none; cursor: pointer; color: inherit; font-family: inherit; }
-        input, textarea { font-family: inherit; color: inherit; }
-        img { display: block; max-width: 100%; }
-
-        .app-layout { display: flex; min-height: 100vh; }
-
-        .sidebar {
-            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
-            background: var(--bg-primary); border-right: 1px solid var(--border-color);
-            padding: 22px 14px; display: flex; flex-direction: column; justify-content: space-between; z-index: 100;
-        }
-
-        .brand-logo { display: flex; align-items: center; gap: 10px; padding: 4px 8px 22px; text-decoration: none; }
-        .brand-text { font-size: 21px; font-weight: 800; letter-spacing: 1.5px; background: var(--brand-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        .nav-links { display: flex; flex-direction: column; gap: 6px; }
-        .nav-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 500; color: var(--text-secondary); position: relative; }
-        .nav-item:hover, .nav-item.active { background: var(--hover-bg); color: var(--text-primary); }
-        .nav-item.active { font-weight: 700; }
-        .nav-item svg { width: 23px; height: 23px; flex-shrink: 0; }
-        .badge-dot { position: absolute; top: 11px; left: 30px; width: 8px; height: 8px; background: var(--like-color); border-radius: 50%; border: 2px solid var(--bg-primary); }
-
-        .mobile-header, .mobile-bottom-nav { display: none; position: fixed; left: 0; right: 0; background: var(--bg-primary); z-index: 100; }
-        .mobile-header { top: 0; height: var(--header-height); border-bottom: 1px solid var(--border-color); padding: 0 16px; align-items: center; justify-content: space-between; }
-        .mobile-bottom-nav { bottom: 0; height: var(--bottom-nav-height); border-top: 1px solid var(--border-color); justify-content: space-around; align-items: center; }
-
-        .main-wrapper { margin-left: var(--sidebar-width); flex: 1; display: flex; justify-content: center; padding: 24px 20px; gap: 32px; }
-        .feed-column { width: 100%; max-width: 580px; }
-        .right-panel { width: 310px; flex-shrink: 0; position: sticky; top: 24px; height: fit-content; }
-        .stories-card, .post-card, .suggestions-box, .profile-page-header {
-            background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 20px;
-        }
-        .stories-card { padding: 14px; }
-        .stories-list { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
-        .stories-list::-webkit-scrollbar { display: none; }
-        .story-item { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 68px; cursor: pointer; }
-        .story-ring { width: 62px; height: 62px; border-radius: 50%; padding: 3px; background: var(--brand-gradient); position: relative; }
-        .story-ring.seen { background: var(--border-color); }
-        .story-ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-primary); }
-        .story-add-badge { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--brand-primary); color: #fff; border: 2px solid var(--bg-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
-        .story-username { font-size: 11px; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        .post-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; }
-        .post-user { display: flex; align-items: center; gap: 10px; }
-        .post-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
-        .post-username { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
-        .verified-icon { width: 14px; height: 14px; color: var(--brand-primary); }
-        .post-location { font-size: 11px; color: var(--text-secondary); display: block; }
-
-        .post-media { position: relative; background: #000; max-height: 580px; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
-        .post-media img { width: 100%; max-height: 580px; object-fit: cover; }
-        .double-tap-heart { position: absolute; width: 84px; height: 84px; color: #fff; opacity: 0; transform: scale(0); pointer-events: none; }
-        .double-tap-heart.animate { animation: heartPop 0.75s ease forwards; }
-        @keyframes heartPop { 0% { opacity: 0; transform: scale(0.3); } 35% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0; transform: scale(0.9); } }
-
-        .post-actions { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 6px; }
-        .post-actions-left { display: flex; gap: 14px; }
-        .action-btn svg { width: 23px; height: 23px; }
-        .action-btn.liked svg { fill: var(--like-color); color: var(--like-color); }
-        .action-btn.saved svg { fill: var(--text-primary); }
-
-        .post-body { padding: 0 14px 12px; font-size: 14px; }
-        .post-likes { font-weight: 700; margin-bottom: 4px; }
-        .post-caption strong { margin-right: 6px; }
-        .post-time { font-size: 11px; color: var(--text-muted); margin: 6px 0; }
-        .comment-item { font-size: 13px; display: flex; justify-content: space-between; margin-top: 4px; }
-        .delete-comment-btn { font-size: 11px; color: var(--text-muted); }
-
-        .comment-form { display: flex; border-top: 1px solid var(--border-color); padding: 10px 14px; gap: 8px; }
-        .comment-input { flex: 1; background: transparent; border: none; outline: none; font-size: 13px; }
-        .comment-submit { color: var(--brand-primary); font-weight: 700; font-size: 13px; opacity: 0.4; pointer-events: none; }
-        .comment-submit.active { opacity: 1; pointer-events: auto; }
-
-        .profile-summary-card, .suggestion-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-        .profile-summary-left, .suggestion-left { display: flex; align-items: center; gap: 10px; }
-        .profile-summary-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
-        .suggestion-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-        .suggestions-box { padding: 14px; }
-        .follow-btn { font-size: 12px; font-weight: 700; color: var(--brand-primary); padding: 5px 10px; border-radius: 8px; background: rgba(99, 102, 241, 0.1); }
-        .follow-btn.following { color: var(--text-primary); background: var(--hover-bg); }
-        .footer-links { font-size: 11px; color: var(--text-muted); line-height: 1.7; }
-
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-        .profile-page-header { padding: 20px; display: flex; align-items: center; gap: 22px; }
-        .profile-page-avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; padding: 3px; background: var(--brand-gradient); flex-shrink: 0; }
-        .profile-stats { display: flex; gap: 18px; margin: 10px 0; font-size: 13px; }
-        .profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .grid-item { aspect-ratio: 1; position: relative; overflow: hidden; border-radius: 6px; cursor: pointer; }
-        .grid-item img { width: 100%; height: 100%; object-fit: cover; }
-        .grid-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); color: #fff; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 700; font-size: 13px; opacity: 0; }
-        .grid-item:hover .grid-overlay { opacity: 1; }
-
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 14px; }
-        .modal-backdrop.open { display: flex; }
-        .modal-card { background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 440px; overflow: hidden; }
-        .modal-header { display: flex; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border-color); font-weight: 700; }
-        .modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-        .form-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-secondary); font-size: 13px; outline: none; }
-        .preset-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .preset-thumb { aspect-ratio: 1; border-radius: 6px; overflow: hidden; border: 2px solid transparent; cursor: pointer; }
-        .preset-thumb.selected { border-color: var(--brand-primary); }
-        .preset-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .btn-primary { background: var(--brand-gradient); color: #fff; font-weight: 700; padding: 11px; border-radius: 10px; font-size: 14px; }
-
-        .story-viewer { position: relative; width: 100%; max-width: 380px; height: 80vh; border-radius: 16px; overflow: hidden; background: #000; }
-        .story-progress-bar { position: absolute; top: 10px; left: 10px; right: 10px; height: 3px; background: rgba(255,255,255,0.3); z-index: 10; }
-        .story-progress-fill { height: 100%; width: 0%; background: #fff; }
-        .story-viewer-header { position: absolute; top: 20px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; color: #fff; z-index: 10; }
-        .story-viewer-img { width: 100%; height: 100%; object-fit: cover; }
-
-        .toast { position: fixed; bottom: 75px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 9px 18px; border-radius: 99px; font-size: 12px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 2000; }
-        .toast.show { opacity: 1; }
-
-        @media (max-width: 1100px) {
-            .right-panel, .brand-text, .nav-label { display: none; }
-            .sidebar { width: var(--sidebar-tablet); padding: 20px 10px; align-items: center; }
-            .main-wrapper { margin-left: var(--sidebar-tablet); }
-        }
-        @media (max-width: 767px) {
-            .sidebar { display: none; }
-            .mobile-header, .mobile-bottom-nav { display: flex; }
-            .main-wrapper { margin-left: 0; padding: calc(var(--header-height) + 10px) 0 calc(var(--bottom-nav-height) + 14px); }
-            .stories-card, .post-card, .profile-page-header { border-radius: 0; border-left: none; border-right: none; margin-bottom: 10px; }
-            .profile-page-header { flex-direction: column; text-align: center; }
-            .profile-stats { justify-content: center; }
-        }
-    </style>
-</head>
-<body>
-    <svg style="display: none;">
-        <symbol id="vuslat-logo" viewBox="0 0 40 40">
-            <defs>
-                <linearGradient id="vuslatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#6366f1"/>
-                    <stop offset="50%" stop-color="#ec4899"/>
-                    <stop offset="100%" stop-color="#f59e0b"/>
-                </linearGradient>
-            </defs>
-            <rect width="40" height="40" rx="11" fill="url(#vuslatGrad)"/>
-            <path d="M11 12L20 29L29 12" stroke="white" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="20" cy="13" r="2.6" fill="white"/>
-        </symbol>
-    </svg>
-
-    <div class="app-layout">
-        <aside class="sidebar">
-            <div>
-                <a href="#" class="brand-logo" onclick="switchView('home', event)">
-                    <svg width="32" height="32"><use href="#vuslat-logo"/></svg>
-                    <span class="brand-text">VUSLAT</span>
-                </a>
-                <nav class="nav-links">
-                    <button class="nav-item active" data-view="home" onclick="switchView('home')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        <span class="nav-label">Ana Sayfa</span>
-                    </button>
-                    <button class="nav-item" data-view="explore" onclick="switchView('explore')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <span class="nav-label">Keşfet</span>
-                    </button>
-                    <button class="nav-item" onclick="openCreateModal()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                        <span class="nav-label">Oluştur</span>
-                    </button>
-                    <button class="nav-item" data-view="notifications" onclick="switchView('notifications')">
-                        <span class="badge-dot"></span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        <span class="nav-label">Bildirimler</span>
-                    </button>
-                    <button class="nav-item" data-view="profile" onclick="switchView('profile')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        <span class="nav-label">Profilim</span>
-                    </button>
-                </nav>
-            </div>
-            <button class="nav-item" onclick="toggleTheme()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                <span class="nav-label" id="theme-label">Karanlık Mod</span>
-            </button>
-        </aside>
-
-        <header class="mobile-header">
-            <div style="display:flex; align-items:center; gap:8px;" onclick="switchView('home')">
-                <svg width="28" height="28"><use href="#vuslat-logo"/></svg>
-                <span class="brand-text" style="font-size: 18px;">VUSLAT</span>
-            </div>
-            <div style="display:flex; gap:14px;">
-                <button onclick="toggleTheme()"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-                <button onclick="switchView('notifications')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-            </div>
-        </header>
-
-        <main class="main-wrapper">
-            <div class="feed-column">
-                <section id="view-home" class="view-section active">
-                    <div class="stories-card"><div class="stories-list" id="stories-container"></div></div>
-                    <div id="feed-container"></div>
-                </section>
-
-                <section id="view-explore" class="view-section">
-                    <div style="margin-bottom: 14px; padding: 0 10px;">
-                        <input type="text" id="explore-search" class="form-input" placeholder="VUSLAT'ta ara..." oninput="renderExplore(this.value)">
-                    </div>
-                    <div class="profile-grid" id="explore-grid"></div>
-                </section>
-
-                <section id="view-notifications" class="view-section">
-                    <div class="suggestions-box">
-                        <h3 style="margin-bottom: 14px; font-size: 15px;">Son Etkileşimler</h3>
-                        <div id="notifications-list" style="display:flex; flex-direction:column; gap:12px;"></div>
-                    </div>
-                </section>
-
-                <section id="view-profile" class="view-section">
-                    <div class="profile-page-header">
-                        <img src="https://unsplash.com" alt="Profil" class="profile-page-avatar">
-                        <div>
-                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                                <h2 style="font-size:19px;">defne.yilmaz</h2>
-                                <button class="follow-btn following" onclick="showToast('Profil düzenleme yakında!')">Profili Düzenle</button>
-                            </div>
-                            <div class="profile-stats">
-                                <span><strong id="profile-post-count">3</strong> gönderi</span>
-                                <span><strong>1.482</strong> takipçi</span>
-                                <span><strong>319</strong> takip</span>
-                            </div>
-                            <p style="font-size:13px; font-weight:600;">Defne Yılmaz</p>
-                            <p style="font-size:12px; color:var(--text-secondary);">İstanbul'dan kareler ✨ Mimari, kahve ve gün batımı.</p>
-                        </div>
-                    </div>
-                    <div class="profile-grid" id="profile-grid"></div>
-                </section>
-            </div>
-            <aside class="right-panel">
-                <div class="profile-summary-card">
-                    <div class="profile-summary-left" style="cursor:pointer;" onclick="switchView('profile')">
-                        <img src="https://unsplash.com" alt="Defne" class="profile-summary-avatar">
-                        <div>
-                            <div style="font-weight:700; font-size:14px;">defne.yilmaz</div>
-                            <div style="font-size:12px; color:var(--text-secondary);">Defne Yılmaz</div>
-                        </div>
-                    </div>
-                    <button style="font-size:12px; font-weight:700; color:var(--brand-primary);" onclick="openCreateModal()">+ Paylaş</button>
-                </div>
-                <div class="suggestions-box">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:12px; font-weight:700; color:var(--text-secondary);">
-                        <span>Senin İçin Önerilenler</span>
-                        <span style="color:var(--text-primary);">Tümü</span>
-                    </div>
-                    <div id="suggestions-container"></div>
-                </div>
-                <div class="footer-links">Hakkında • Yardım • Gizlilik • Koşullar<br><strong>© 2026 VUSLAT PLATFORMU</strong></div>
-            </aside>
-        </main>
-
-        <nav class="mobile-bottom-nav">
-            <button class="nav-item active" data-view="home" onclick="switchView('home')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            </button>
-            <button class="nav-item" data-view="explore" onclick="switchView('explore')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </button>
-            <button class="nav-item" onclick="openCreateModal()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            </button>
-            <button class="nav-item" data-view="profile" onclick="switchView('profile')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </button>
-        </nav>
-    </div>
-
-    <div class="modal-backdrop" id="create-modal" onclick="if(event.target===this) closeCreateModal()">
-        <div class="modal-card">
-            <div class="modal-header"><span>Yeni Gönderi Oluştur</span><button onclick="closeCreateModal()" style="font-size:20px;">&times;</button></div>
-            <div class="modal-body">
-                <label style="font-size:12px; font-weight:600;">Hazır Görsel Seç veya URL Gir:</label>
-                <div class="preset-images" id="preset-images"></div>
-                <input type="text" id="new-post-img" class="form-input" placeholder="Görsel URL adresi (https://...)">
-                <input type="text" id="new-post-location" class="form-input" placeholder="Konum ekle (Örn: Galata, İstanbul)">
-                <textarea id="new-post-caption" class="form-input" rows="2" placeholder="Bir açıklama yaz..."></textarea>
-                <button class="btn-primary" onclick="publishNewPost()">VUSLAT'ta Paylaş</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-backdrop" id="story-modal" onclick="if(event.target===this) closeStoryModal()">
-        <div class="story-viewer">
-            <div class="story-progress-bar"><div class="story-progress-fill" id="story-progress"></div></div>
-            <div class="story-viewer-header">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <img id="story-modal-avatar" src="" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
-                    <strong id="story-modal-user" style="font-size:13px;"></strong>
-                </div>
-                <button onclick="closeStoryModal()" style="color:#fff; font-size:22px;">&times;</button>
-            </div>
-            <img id="story-modal-img" class="story-viewer-img" src="" alt="Hikaye">
-        </div>
-    </div>
-
-    <div class="toast" id="toast"></div>
 <script>
+function makeArt(c1, c2, t1, t2) {
+  var s = '<svg xmlns="http://w3.org"' +
+    ' width="600" height="600">' +
+    '<defs><linearGradient id="g">' +
+    '<stop offset="0%" stop-color="' + c1 + '"/>' +
+    '<stop offset="100%" stop-color="' + c2 + '"/>' +
+    '</linearGradient></defs>' +
+    '<rect width="600" height="600" fill="url(#g)"/>' +
+    '<text x="50%" y="48%" text-anchor="middle"' +
+    ' fill="#fff" font-size="38"' +
+    ' font-family="sans-serif" font-weight="bold">' +
+    t1 + '</text>' +
+    '<text x="50%" y="56%" text-anchor="middle"' +
+    ' fill="#eee" font-size="20"' +
+    ' font-family="sans-serif">' +
+    t2 + '</text></svg>';
+  return 'data:image/svg+xml;utf8,' +
+    encodeURIComponent(s);
+}
+
+function makeAv(c1, c2, ch) {
+  var s = '<svg xmlns="http://w3.org"' +
+    ' width="150" height="150">' +
+    '<rect width="150" height="150" fill="' + c1 + '"/>' +
+    '<text x="50%" y="55%" text-anchor="middle"' +
+    ' fill="#fff" font-size="64"' +
+    ' font-family="sans-serif" font-weight="bold">' +
+    ch + '</text></svg>';
+  return 'data:image/svg+xml;utf8,' +
+    encodeURIComponent(s);
+}
 var currentUser = {
   username: 'defne.yilmaz',
-  avatar: 'https://unsplash.com'
+  avatar: makeAv('#6366f1', '#ec4899', 'D')
 };
 
 var storiesData = [
-  { id: 1, username: 'Hikayen', avatar: currentUser.avatar, storyImg: 'https://unsplash.com', isOwn: true, seen: false },
-  { id: 2, username: 'kerem.kaya', avatar: 'https://unsplash.com', storyImg: 'https://unsplash.com', seen: false },
-  { id: 3, username: 'selin.arslan', avatar: 'https://unsplash.com', storyImg: 'https://unsplash.com', seen: false }
+  { id: 1, username: 'Hikayen',
+    avatar: currentUser.avatar,
+    storyImg: makeArt('#6366f1', '#ec4899',
+      'VUSLAT', 'Yeni anını paylaş'),
+    isOwn: true, seen: false },
+  { id: 2, username: 'kerem.kaya',
+    avatar: makeAv('#0ea5e9', '#2563eb', 'K'),
+    storyImg: makeArt('#0ea5e9', '#1e3a8a',
+      'Karaköy Sahil', 'İstanbul Akşamı'),
+    seen: false },
+  { id: 3, username: 'selin.arslan',
+    avatar: makeAv('#f59e0b', '#ef4444', 'S'),
+    storyImg: makeArt('#f59e0b', '#b91c1c',
+      'Moda Kahve', 'Hafta Sonu'),
+    seen: false }
 ];
 
 var postsData = [
   {
-    id: 101,
-    username: 'kerem.kaya',
+    id: 101, username: 'kerem.kaya',
     location: 'Karaköy, İstanbul',
-    avatar: 'https://unsplash.com',
-    image: 'https://unsplash.com',
-    likes: 428,
-    liked: false,
-    saved: false,
-    caption: 'Boğaz esintisi ve akşamüstü ışıkları 🌅',
+    avatar: makeAv('#0ea5e9', '#2563eb', 'K'),
+    image: makeArt('#1e293b', '#3b82f6',
+      'Boğaz Esintisi', 'Karaköy • Gün Batımı'),
+    likes: 428, liked: false, saved: false,
+    caption: 'Boğaz esintisi ve ışıklar 🌅',
     time: '2 SAAT ÖNCE',
-    comments: [{ user: 'selin.arslan', text: 'Renkler muhteşem!' }]
+    comments: [{ user: 'selin.arslan',
+      text: 'Renkler muhteşem!' }]
   },
   {
-    id: 102,
-    username: 'selin.arslan',
+    id: 102, username: 'selin.arslan',
     location: 'Moda, Kadıköy',
-    avatar: 'https://unsplash.com',
-    image: 'https://unsplash.com',
-    likes: 892,
-    liked: true,
-    saved: true,
-    caption: 'Güne güzel bir kahveyle başlangıç ☕📖',
+    avatar: makeAv('#f59e0b', '#ef4444', 'S'),
+    image: makeArt('#78350f', '#f59e0b',
+      'Sabah Kahvesi', 'Moda Sahili'),
+    likes: 892, liked: true, saved: true,
+    caption: 'Güne güzel bir kahveyle başlangıç ☕',
     time: '5 SAAT ÖNCE',
-    comments: [{ user: 'defne.yilmaz', text: 'Afiyet olsun ✨' }]
+    comments: [{ user: 'defne.yilmaz',
+      text: 'Afiyet olsun ✨' }]
   }
 ];
 
 var suggestionsData = [
-  { username: 'zeynep.koc', subtitle: 'Önerilen', avatar: 'https://unsplash.com', following: false },
-  { username: 'emre.yildiz', subtitle: 'Yeni üye', avatar: 'https://unsplash.com', following: false }
+  { username: 'zeynep.koc',
+    subtitle: 'Önerilen',
+    avatar: makeAv('#10b981', '#059669', 'Z'),
+    following: false },
+  { username: 'emre.yildiz',
+    subtitle: 'Yeni üye',
+    avatar: makeAv('#8b5cf6', '#6d28d9', 'E'),
+    following: false }
 ];
 
 var presetPhotos = [
-  'https://unsplash.com',
-  'https://unsplash.com',
-  'https://unsplash.com',
-  'https://unsplash.com'
+  makeArt('#6366f1', '#ec4899',
+    'Galata Kulesi', 'İstanbul'),
+  makeArt('#10b981', '#047857',
+    'Doğa Yürüyüşü', 'Belgrad Ormanı'),
+  makeArt('#f97316', '#db2777',
+    'Gün Batımı', 'Salacak Sahili'),
+  makeArt('#06b6d4', '#3b82f6',
+    'Deniz Havası', 'Büyükada')
+];
+var currentUser = {
+  username: 'defne.yilmaz',
+  avatar: makeAv('#6366f1', '#ec4899', 'D')
+};
+
+var storiesData = [
+  { id: 1, username: 'Hikayen',
+    avatar: currentUser.avatar,
+    storyImg: makeArt('#6366f1', '#ec4899',
+      'VUSLAT', 'Yeni anını paylaş'),
+    isOwn: true, seen: false },
+  { id: 2, username: 'kerem.kaya',
+    avatar: makeAv('#0ea5e9', '#2563eb', 'K'),
+    storyImg: makeArt('#0ea5e9', '#1e3a8a',
+      'Karaköy Sahil', 'İstanbul Akşamı'),
+    seen: false },
+  { id: 3, username: 'selin.arslan',
+    avatar: makeAv('#f59e0b', '#ef4444', 'S'),
+    storyImg: makeArt('#f59e0b', '#b91c1c',
+      'Moda Kahve', 'Hafta Sonu'),
+    seen: false }
 ];
 
+var postsData = [
+  {
+    id: 101, username: 'kerem.kaya',
+    location: 'Karaköy, İstanbul',
+    avatar: makeAv('#0ea5e9', '#2563eb', 'K'),
+    image: makeArt('#1e293b', '#3b82f6',
+      'Boğaz Esintisi', 'Karaköy • Gün Batımı'),
+    likes: 428, liked: false, saved: false,
+    caption: 'Boğaz esintisi ve ışıklar 🌅',
+    time: '2 SAAT ÖNCE',
+    comments: [{ user: 'selin.arslan',
+      text: 'Renkler muhteşem!' }]
+  },
+  {
+    id: 102, username: 'selin.arslan',
+    location: 'Moda, Kadıköy',
+    avatar: makeAv('#f59e0b', '#ef4444', 'S'),
+    image: makeArt('#78350f', '#f59e0b',
+      'Sabah Kahvesi', 'Moda Sahili'),
+    likes: 892, liked: true, saved: true,
+    caption: 'Güne güzel bir kahveyle başlangıç ☕',
+    time: '5 SAAT ÖNCE',
+    comments: [{ user: 'defne.yilmaz',
+      text: 'Afiyet olsun ✨' }]
+  }
+];
+
+var suggestionsData = [
+  { username: 'zeynep.koc',
+    subtitle: 'Önerilen',
+    avatar: makeAv('#10b981', '#059669', 'Z'),
+    following: false },
+  { username: 'emre.yildiz',
+    subtitle: 'Yeni üye',
+    avatar: makeAv('#8b5cf6', '#6d28d9', 'E'),
+    following: false }
+];
+
+var presetPhotos = [
+  makeArt('#6366f1', '#ec4899',
+    'Galata Kulesi', 'İstanbul'),
+  makeArt('#10b981', '#047857',
+    'Doğa Yürüyüşü', 'Belgrad Ormanı'),
+  makeArt('#f97316', '#db2777',
+    'Gün Batımı', 'Salacak Sahili'),
+  makeArt('#06b6d4', '#3b82f6',
+    'Deniz Havası', 'Büyükada')
+];
+function fixHeader() {
+  var h = document.querySelector(
+    '.mobile-header div');
+  if (h) {
+    h.innerHTML =
+      '<svg width="28" height="28">' +
+      '<use href="#vuslat-logo"/></svg>' +
+      '<span style="font-size:19px;' +
+      'font-weight:800;letter-spacing:1.5px;' +
+      'background:linear-gradient(135deg,' +
+      '#6366f1,#ec4899,#f59e0b);' +
+      '-webkit-background-clip:text;' +
+      '-webkit-text-fill-color:transparent;">' +
+      'VUSLAT</span>';
+  }
+  var p1 = document.querySelector(
+    '.profile-page-avatar');
+  if (p1) p1.src = currentUser.avatar;
+  var p2 = document.querySelector(
+    '.profile-summary-avatar');
+  if (p2) p2.src = currentUser.avatar;
+}
+
 function renderStories() {
-  var el = document.getElementById('stories-container');
+  var el = document.getElementById(
+    'stories-container');
   if (!el) return;
   el.innerHTML = storiesData.map(function(s) {
-    var ring = s.seen ? 'story-ring seen' : 'story-ring';
-    var badge = s.isOwn ? '<span class="story-add-badge">+</span>' : '';
-    return '<div class="story-item" onclick="openStory(' + s.id + ')">' +
-      '<div class="' + ring + '"><img src="' + s.avatar + '">' + badge + '</div>' +
-      '<span class="story-username">' + s.username + '</span></div>';
+    var r = s.seen ?
+      'story-ring seen' : 'story-ring';
+    var b = s.isOwn ?
+      '<span class="story-add-badge">+</span>'
+      : '';
+    return '<div class="story-item"' +
+      ' onclick="openStory(' + s.id + ')">' +
+      '<div class="' + r + '">' +
+      '<img src="' + s.avatar + '">' + b +
+      '</div><span class="story-username">' +
+      s.username + '</span></div>';
   }).join('');
 }
 
+function renderSuggestions() {
+  var el = document.getElementById(
+    'suggestions-container');
+  if (!el) return;
+  el.innerHTML = suggestionsData.map(
+    function(u, i) {
+      var c = u.following ?
+        'follow-btn following' : 'follow-btn';
+      var t = u.following ?
+        'Takiptesin' : 'Takip Et';
+      return '<div class="suggestion-item">' +
+        '<div class="suggestion-left">' +
+        '<img src="' + u.avatar +
+        '" class="suggestion-avatar"><div>' +
+        '<div style="font-size:13px;' +
+        'font-weight:700;">' + u.username +
+        '</div><div style="font-size:11px;' +
+        'color:var(--text-secondary);">' +
+        u.subtitle + '</div></div></div>' +
+        '<button class="' + c +
+        '" onclick="toggleFollow(' + i + ')">' +
+        t + '</button></div>';
+    }).join('');
+}
 function renderFeed() {
-  var el = document.getElementById('feed-container');
+  var el = document.getElementById(
+    'feed-container');
   if (!el) return;
   el.innerHTML = postsData.map(function(p) {
-    var likeCls = p.liked ? 'action-btn liked' : 'action-btn';
-    var saveCls = p.saved ? 'action-btn saved' : 'action-btn';
-    var comms = p.comments.map(function(c, i) {
-      var del = c.user === currentUser.username ? '<button class="delete-comment-btn" onclick="deleteComment(' + p.id + ',' + i + ')">Sil</button>' : '';
-      return '<div class="comment-item"><span><strong>' + c.user + '</strong> ' + c.text + '</span>' + del + '</div>';
+    var lk = p.liked ?
+      'action-btn liked' : 'action-btn';
+    var sv = p.saved ?
+      'action-btn saved' : 'action-btn';
+    var cm = p.comments.map(function(c, i) {
+      var dl = c.user === currentUser.username ?
+        '<button class="delete-comment-btn"' +
+        ' onclick="deleteComment(' + p.id +
+        ',' + i + ')">Sil</button>' : '';
+      return '<div class="comment-item">' +
+        '<span><strong>' + c.user +
+        '</strong> ' + c.text + '</span>' +
+        dl + '</div>';
     }).join('');
     return '<article class="post-card">' +
-      '<div class="post-header"><div class="post-user"><img src="' + p.avatar + '" class="post-avatar">' +
-      '<div><span class="post-username">' + p.username + '</span><span class="post-location">' + p.location + '</span></div></div>' +
-      '<button onclick="showToast(\'Seçenekler\')">•••</button></div>' +
-      '<div class="post-media" ondblclick="handleDoubleTap(' + p.id + ')"><img src="' + p.image + '">' +
-      '<svg class="double-tap-heart" id="heart-anim-' + p.id + '" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>' +
-      '<div class="post-actions"><div class="post-actions-left">' +
-      '<button class="' + likeCls + '" onclick="toggleLike(' + p.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>' +
-      '<button class="action-btn" onclick="document.getElementById(\'comment-input-' + p.id + '\').focus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button>' +
-      '<button class="action-btn" onclick="sharePost(\'' + p.username + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>' +
-      '<button class="' + saveCls + '" onclick="toggleSave(' + p.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div>' +
-      '<div class="post-body"><div class="post-likes">' + p.likes + ' beğenme</div>' +
-      '<div class="post-caption"><strong>' + p.username + '</strong>' + p.caption + '</div>' +
-      '<div class="post-time">' + p.time + '</div><div>' + comms + '</div></div>' +
-      '<form class="comment-form" onsubmit="addComment(event,' + p.id + ')">' +
-      '<input type="text" id="comment-input-' + p.id + '" class="comment-input" placeholder="Yorum ekle..." oninput="toggleSubmitBtn(this)">' +
-      '<button type="submit" class="comment-submit">Paylaş</button></form></article>';
-  }).join('');
-}
-function renderSuggestions() {
-  var el = document.getElementById('suggestions-container');
-  if (!el) return;
-  el.innerHTML = suggestionsData.map(function(u, i) {
-    var cls = u.following ? 'follow-btn following' : 'follow-btn';
-    var txt = u.following ? 'Takiptesin' : 'Takip Et';
-    return '<div class="suggestion-item"><div class="suggestion-left">' +
-      '<img src="' + u.avatar + '" class="suggestion-avatar"><div>' +
-      '<div style="font-size:13px;font-weight:700;">' + u.username + '</div>' +
-      '<div style="font-size:11px;color:var(--text-secondary);">' + u.subtitle + '</div></div></div>' +
-      '<button class="' + cls + '" onclick="toggleFollow(' + i + ')">' + txt + '</button></div>';
+      '<div class="post-header">' +
+      '<div class="post-user">' +
+      '<img src="' + p.avatar +
+      '" class="post-avatar"><div>' +
+      '<span class="post-username">' +
+      p.username + '</span>' +
+      '<span class="post-location">' +
+      p.location + '</span></div></div>' +
+      '<button onclick="showToast(' +
+      '\'Seçenekler\')">•••</button></div>' +
+      '<div class="post-media"' +
+      ' ondblclick="handleDoubleTap(' +
+      p.id + ')"><img src="' + p.image + '">' +
+      '<svg class="double-tap-heart"' +
+      ' id="heart-anim-' + p.id + '"' +
+      ' viewBox="0 0 24 24"' +
+      ' fill="currentColor">' +
+      '<path d="M20.84 4.61a5.5 5.5 0 ' +
+      '0 0-7.78 0L12 5.67l-1.06-1.06a5.5 ' +
+      '5.5 0 0 0-7.78 7.78l1.06 1.06L12 ' +
+      '21.23l7.78-7.78 1.06-1.06a5.5 5.5 ' +
+      '0 0 0 0-7.78z"/></svg></div>' +
+      '<div class="post-actions">' +
+      '<div class="post-actions-left">' +
+      '<button class="' + lk + '"' +
+      ' onclick="toggleLike(' + p.id + ')">' +
+      '❤️</button>' +
+      '<button class="action-btn"' +
+      ' onclick="focusComm(' + p.id + ')">' +
+      '💬</button>' +
+      '<button class="action-btn"' +
+      ' onclick="sharePost(\'' + p.username +
+      '\')">📤</button></div>' +
+      '<button class="' + sv + '"' +
+      ' onclick="toggleSave(' + p.id + ')">' +
+      '🔖</button></div>' +
+      '<div class="post-body">' +
+      '<div class="post-likes">' + p.likes +
+      ' beğenme</div>' +
+      '<div class="post-caption"><strong>' +
+      p.username + '</strong> ' + p.caption +
+      '</div><div class="post-time">' +
+      p.time + '</div><div>' + cm +
+      '</div></div>' +
+      '<form class="comment-form"' +
+      ' onsubmit="addComment(event,' +
+      p.id + ')"><input type="text"' +
+      ' id="comment-input-' + p.id + '"' +
+      ' class="comment-input"' +
+      ' placeholder="Yorum ekle..."' +
+      ' oninput="toggleSubmitBtn(this)">' +
+      '<button type="submit"' +
+      ' class="comment-submit">Paylaş</button>' +
+      '</form></article>';
   }).join('');
 }
 
+function focusComm(id) {
+  var i = document.getElementById(
+    'comment-input-' + id);
+  if (i) i.focus();
+}
 function renderProfileAndExplore() {
-  var myPosts = postsData.filter(function(p) { return p.username === currentUser.username; });
-  var list = myPosts.length > 0 ? myPosts : postsData;
-  var cEl = document.getElementById('profile-post-count');
-  var gEl = document.getElementById('profile-grid');
+  var my = postsData.filter(function(p) {
+    return p.username === currentUser.username;
+  });
+  var list = my.length > 0 ? my : postsData;
+  var cEl = document.getElementById(
+    'profile-post-count');
+  var gEl = document.getElementById(
+    'profile-grid');
   if (cEl) cEl.textContent = list.length;
   if (gEl) {
     gEl.innerHTML = list.map(function(p) {
-      return '<div class="grid-item" onclick="switchView(\'home\')"><img src="' + p.image + '">' +
-        '<div class="grid-overlay"><span>❤️ ' + p.likes + '</span></div></div>';
+      return '<div class="grid-item"' +
+        ' onclick="switchView(\'home\')">' +
+        '<img src="' + p.image + '">' +
+        '<div class="grid-overlay"><span>❤️ ' +
+        p.likes + '</span></div></div>';
     }).join('');
   }
   renderExplore('');
 }
 
 function renderExplore(q) {
-  var el = document.getElementById('explore-grid');
+  var el = document.getElementById(
+    'explore-grid');
   if (!el) return;
-  var query = (q || '').toLowerCase().trim();
-  var extra = presetPhotos.map(function(img, i) {
-    return { image: img, likes: 300 + i * 80, username: 'vuslat', location: 'Türkiye', caption: '' };
+  var qr = (q || '').toLowerCase().trim();
+  var ex = presetPhotos.map(function(im, i) {
+    return {
+      image: im,
+      likes: 300 + i * 80,
+      username: 'vuslat',
+      location: 'Türkiye'
+    };
   });
-  var pool = postsData.concat(extra);
-  var filtered = pool.filter(function(item) {
-    return item.username.toLowerCase().indexOf(query) > -1 ||
-      (item.location && item.location.toLowerCase().indexOf(query) > -1);
+  var pool = postsData.concat(ex);
+  var flt = pool.filter(function(item) {
+    return item.username.toLowerCase()
+      .indexOf(qr) > -1 ||
+      (item.location && item.location
+      .toLowerCase().indexOf(qr) > -1);
   });
-  el.innerHTML = filtered.map(function(p) {
-    return '<div class="grid-item" onclick="switchView(\'home\')"><img src="' + p.image + '">' +
-      '<div class="grid-overlay"><span>❤️ ' + p.likes + '</span></div></div>';
+  el.innerHTML = flt.map(function(p) {
+    return '<div class="grid-item"' +
+      ' onclick="switchView(\'home\')">' +
+      '<img src="' + p.image + '">' +
+      '<div class="grid-overlay"><span>❤️ ' +
+      p.likes + '</span></div></div>';
   }).join('');
 }
 
 function renderNotifications() {
-  var el = document.getElementById('notifications-list');
+  var el = document.getElementById(
+    'notifications-list');
   if (!el) return;
-  el.innerHTML = '<div style="font-size:13px;"><strong>kerem.kaya</strong> gönderini beğendi. <span style="color:var(--text-muted);">12 dk</span></div>' +
-    '<div style="font-size:13px;"><strong>selin.arslan</strong> yorum yaptı: Harika kare ✨ <span style="color:var(--text-muted);">45 dk</span></div>';
+  el.innerHTML =
+    '<div style="font-size:13px;">' +
+    '<strong>kerem.kaya</strong> gönderini' +
+    ' beğendi. <span style="color:gray;">' +
+    '12 dk</span></div>' +
+    '<div style="font-size:13px;">' +
+    '<strong>selin.arslan</strong> yorum' +
+    ' yaptı: Harika kare ✨</div>';
 }
 
 function toggleLike(id) {
-  var p = postsData.find(function(x) { return x.id === id; });
+  var p = postsData.find(function(x) {
+    return x.id === id;
+  });
   if (!p) return;
   p.liked = !p.liked;
   p.likes += p.liked ? 1 : -1;
@@ -502,105 +396,164 @@ function toggleLike(id) {
 }
 
 function handleDoubleTap(id) {
-  var p = postsData.find(function(x) { return x.id === id; });
+  var p = postsData.find(function(x) {
+    return x.id === id;
+  });
   if (!p) return;
-  if (!p.liked) { p.liked = true; p.likes += 1; renderFeed(); }
-  var h = document.getElementById('heart-anim-' + id);
-  if (h) { h.classList.remove('animate'); void h.offsetWidth; h.classList.add('animate'); }
+  if (!p.liked) {
+    p.liked = true;
+    p.likes += 1;
+    renderFeed();
+  }
+  var h = document.getElementById(
+    'heart-anim-' + id);
+  if (h) {
+    h.classList.remove('animate');
+    void h.offsetWidth;
+    h.classList.add('animate');
+  }
 }
 
 function toggleSave(id) {
-  var p = postsData.find(function(x) { return x.id === id; });
+  var p = postsData.find(function(x) {
+    return x.id === id;
+  });
   if (!p) return;
   p.saved = !p.saved;
   renderFeed();
-  showToast(p.saved ? 'Kaydedildi' : 'Kaydedilenlerden çıkarıldı');
+  showToast(p.saved ?
+    'Kaydedildi' : 'Çıkarıldı');
 }
 
 function toggleSubmitBtn(inp) {
-  inp.nextElementSibling.classList.toggle('active', inp.value.trim().length > 0);
+  inp.nextElementSibling.classList.toggle(
+    'active', inp.value.trim().length > 0);
 }
 
 function addComment(e, id) {
   e.preventDefault();
-  var inp = document.getElementById('comment-input-' + id);
+  var inp = document.getElementById(
+    'comment-input-' + id);
   var txt = inp.value.trim();
   if (!txt) return;
-  var p = postsData.find(function(x) { return x.id === id; });
-  if (p) { p.comments.push({ user: currentUser.username, text: txt }); renderFeed(); showToast('Yorum paylaşıldı'); }
+  var p = postsData.find(function(x) {
+    return x.id === id;
+  });
+  if (p) {
+    p.comments.push({
+      user: currentUser.username,
+      text: txt
+    });
+    renderFeed();
+    showToast('Yorum paylaşıldı');
+  }
 }
 
 function deleteComment(id, idx) {
-  var p = postsData.find(function(x) { return x.id === id; });
-  if (p) { p.comments.splice(idx, 1); renderFeed(); showToast('Yorum silindi'); }
+  var p = postsData.find(function(x) {
+    return x.id === id;
+  });
+  if (p) {
+    p.comments.splice(idx, 1);
+    renderFeed();
+    showToast('Yorum silindi');
+  }
 }
 
 function sharePost(user) {
-  if (navigator.clipboard) navigator.clipboard.writeText(window.location.href).catch(function() {});
-  showToast('@' + user + ' bağlantısı kopyalandı!');
+  showToast('@' + user + ' kopyalandı!');
 }
 
 function toggleFollow(i) {
-  suggestionsData[i].following = !suggestionsData[i].following;
+  suggestionsData[i].following =
+    !suggestionsData[i].following;
   renderSuggestions();
-  showToast(suggestionsData[i].following ? 'Takip edildi' : 'Takipten çıkıldı');
+  showToast(suggestionsData[i].following ?
+    'Takip edildi' : 'Takipten çıkıldı');
 }
 
 function switchView(view, e) {
   if (e) e.preventDefault();
-  document.querySelectorAll('.view-section').forEach(function(s) { s.classList.remove('active'); });
-  var t = document.getElementById('view-' + view);
+  document.querySelectorAll('.view-section')
+    .forEach(function(s) {
+      s.classList.remove('active');
+    });
+  var t = document.getElementById(
+    'view-' + view);
   if (t) t.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(function(b) {
-    b.classList.toggle('active', b.getAttribute('data-view') === view);
-  });
-  if (view === 'profile' || view === 'explore') renderProfileAndExplore();
-  if (view === 'notifications') renderNotifications();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelectorAll('.nav-item')
+    .forEach(function(b) {
+      b.classList.toggle('active',
+        b.getAttribute('data-view') === view);
+    });
+  if (view === 'profile' || view === 'explore') {
+    renderProfileAndExplore();
+  }
+  if (view === 'notifications') {
+    renderNotifications();
+  }
+  window.scrollTo({ top: 0 });
 }
 
 function toggleTheme() {
-  var html = document.documentElement;
-  var dark = html.getAttribute('data-theme') === 'dark';
-  html.setAttribute('data-theme', dark ? 'light' : 'dark');
-  var lbl = document.getElementById('theme-label');
-  if (lbl) lbl.textContent = dark ? 'Karanlık Mod' : 'Aydınlık Mod';
+  var h = document.documentElement;
+  var d = h.getAttribute('data-theme') === 'dark';
+  h.setAttribute('data-theme',
+    d ? 'light' : 'dark');
 }
 
 function openCreateModal() {
-  document.getElementById('preset-images').innerHTML = presetPhotos.map(function(u, i) {
-    var cls = i === 0 ? 'preset-thumb selected' : 'preset-thumb';
-    return '<div class="' + cls + '" onclick="selectPreset(this,\'' + u + '\')"><img src="' + u + '"></div>';
-  }).join('');
-  document.getElementById('new-post-img').value = presetPhotos;
-  document.getElementById('create-modal').classList.add('open');
+  var box = document.getElementById(
+    'preset-images');
+  box.innerHTML = presetPhotos.map(
+    function(u, i) {
+      var c = i === 0 ?
+        'preset-thumb selected' :
+        'preset-thumb';
+      return '<div class="' + c + '"' +
+        ' onclick="selectPreset(this,\'' +
+        u + '\')"><img src="' + u +
+        '"></div>';
+    }).join('');
+  document.getElementById('new-post-img')
+    .value = presetPhotos[0];
+  document.getElementById('create-modal')
+    .classList.add('open');
 }
 
 function selectPreset(el, url) {
-  document.querySelectorAll('.preset-thumb').forEach(function(t) { t.classList.remove('selected'); });
+  document.querySelectorAll('.preset-thumb')
+    .forEach(function(t) {
+      t.classList.remove('selected');
+    });
   el.classList.add('selected');
-  document.getElementById('new-post-img').value = url;
+  document.getElementById('new-post-img')
+    .value = url;
 }
 
 function closeCreateModal() {
-  document.getElementById('create-modal').classList.remove('open');
+  document.getElementById('create-modal')
+    .classList.remove('open');
 }
 
 function publishNewPost() {
-  var img = document.getElementById('new-post-img').value.trim();
-  var loc = document.getElementById('new-post-location').value.trim();
-  var cap = document.getElementById('new-post-caption').value.trim();
-  if (!img) return showToast('Lütfen bir görsel seçin');
+  var img = document.getElementById(
+    'new-post-img').value.trim();
+  var loc = document.getElementById(
+    'new-post-location').value.trim();
+  var cap = document.getElementById(
+    'new-post-caption').value.trim();
+  if (!img) return showToast('Görsel seçin');
   postsData.unshift({
     id: Date.now(),
     username: currentUser.username,
-    location: loc || 'İstanbul, Türkiye',
+    location: loc || 'İstanbul',
     avatar: currentUser.avatar,
     image: img,
     likes: 1,
     liked: true,
     saved: false,
-    caption: cap || 'VUSLAT’ta yeni bir anı ✨',
+    caption: cap || 'VUSLAT yeni anı ✨',
     time: 'AZ ÖNCE',
     comments: []
   });
@@ -608,32 +561,41 @@ function publishNewPost() {
   renderProfileAndExplore();
   closeCreateModal();
   switchView('home');
-  document.getElementById('new-post-caption').value = '';
-  document.getElementById('new-post-location').value = '';
   showToast('Gönderin yayınlandı!');
 }
 
 var storyTimer = null;
 function openStory(id) {
-  var s = storiesData.find(function(x) { return x.id === id; });
+  var s = storiesData.find(function(x) {
+    return x.id === id;
+  });
   if (!s) return;
   s.seen = true;
   renderStories();
-  document.getElementById('story-modal-avatar').src = s.avatar;
-  document.getElementById('story-modal-user').textContent = s.username;
-  document.getElementById('story-modal-img').src = s.storyImg;
-  document.getElementById('story-modal').classList.add('open');
-  var p = document.getElementById('story-progress');
+  document.getElementById(
+    'story-modal-avatar').src = s.avatar;
+  document.getElementById(
+    'story-modal-user').textContent = s.username;
+  document.getElementById(
+    'story-modal-img').src = s.storyImg;
+  document.getElementById('story-modal')
+    .classList.add('open');
+  var p = document.getElementById(
+    'story-progress');
   p.style.transition = 'none';
   p.style.width = '0%';
-  setTimeout(function() { p.style.transition = 'width 4s linear'; p.style.width = '100%'; }, 30);
+  setTimeout(function() {
+    p.style.transition = 'width 4s linear';
+    p.style.width = '100%';
+  }, 30);
   clearTimeout(storyTimer);
   storyTimer = setTimeout(closeStoryModal, 4100);
 }
 
 function closeStoryModal() {
   clearTimeout(storyTimer);
-  document.getElementById('story-modal').classList.remove('open');
+  document.getElementById('story-modal')
+    .classList.remove('open');
 }
 
 function showToast(msg) {
@@ -642,16 +604,21 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(window.toastTimeout);
-  window.toastTimeout = setTimeout(function() { t.classList.remove('show'); }, 2500);
+  window.toastTimeout = setTimeout(function() {
+    t.classList.remove('show');
+  }, 2500);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  renderStories();
-  renderFeed();
-  renderSuggestions();
-  renderProfileAndExplore();
-  renderNotifications();
-});
+document.addEventListener('DOMContentLoaded',
+  function() {
+    fixHeader();
+    renderStories();
+    renderFeed();
+    renderSuggestions();
+    renderProfileAndExplore();
+    renderNotifications();
+  });
 </script>
 </body>
 </html>
+
