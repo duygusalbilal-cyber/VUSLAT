@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VUSLAT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0c0e;
+      --bg-card: #161618;
+      --bg-elevated: #1e1e22;
+      --border: #2a2a2e;
+      --text: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --accent: #d4af37;
+      --accent-soft: rgba(212, 175, 55, 0.15);
+      --danger: #ef4444;
+      --like: #ef4444;
+      --radius: 16px;
+      --radius-sm: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --nav-width: 260px;
+      --right-width: 340px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .logo svg { width: 32px; height: 32px; }
+    .logo span { background: linear-gradient(135deg, #fff 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* Layout */
+    .app {
+      display: grid;
+      grid-template-columns: var(--nav-width) 1fr var(--right-width);
+      min-height: 100vh;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Left Nav */
+    .left-nav {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 16px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: var(--bg-elevated);
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-item svg { width: 26px; height: 26px; flex-shrink: 0; }
+    .create-btn {
+      margin-top: 16px;
+      background: linear-gradient(135deg, var(--accent) 0%, #b8860b 100%);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .create-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(212,175,55,0.3); }
+
+    /* Main Feed */
+    .main {
+      padding: 0 24px 80px;
+      max-width: 680px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Top Bar Mobile */
+    .top-bar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(12,12,14,0.9);
+      backdrop-filter: blur(20px);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Stories */
+    .stories {
+      display: flex;
+      gap: 16px;
+      padding: 20px 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .stories::-webkit-scrollbar { display: none; }
+    .story {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .story-ring {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, var(--accent), #f59e0b, #ec4899);
+      transition: transform 0.2s;
+    }
+    .story:hover .story-ring { transform: scale(1.05); }
+    .story-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--bg);
+      background: var(--bg-elevated);
+    }
+    .story-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      max-width: 72px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Post */
+    .post {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .post-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+    }
+    .post-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--bg-elevated);
+    }
+    .post-user { font-weight: 700; font-size: 15px; }
+    .post-time { font-size: 13px; color: var(--text-secondary); margin-left: auto; }
+    .post-image {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      background: var(--bg-elevated);
+      display: block;
+    }
+    .post-actions {
+      display: flex;
+      gap: 16px;
+      padding: 12px 16px 8px;
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px;
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .action-btn:hover { background: var(--bg-elevated); }
+    .action-btn.liked { color: var(--like); }
+    .action-btn.liked svg { fill: var(--like); }
+    .post-likes { padding: 0 16px; font-weight: 700; font-size: 14px; }
+    .post-caption { padding: 8px 16px 12px; font-size: 14.5px; }
+    .post-caption strong { font-weight: 700; }
+    .post-comments-preview {
+      padding: 0 16px 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .comment-input-area {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .comment-input {
+      flex: 1;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 10px 16px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+    .comment-input:focus { border-color: var(--accent); }
+    .send-comment {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 20px;
+      padding: 0 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Right Sidebar */
+    .right-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 16px;
+      overflow-y: auto;
+      border-left: 1px solid var(--border);
+    }
+    .profile-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 12px;
+      border: 3px solid var(--accent);
+    }
+    .profile-name { font-weight: 800; font-size: 18px; }
+    .profile-handle { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
+    .profile-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .profile-stats strong { display: block; font-size: 16px; }
+    .suggestions h3 { font-size: 15px; margin-bottom: 12px; color: var(--text-secondary); }
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    .suggestion-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .suggestion-info { flex: 1; }
+    .suggestion-info strong { font-size: 14px; }
+    .suggestion-info span { font-size: 12px; color: var(--text-secondary); display: block; }
+    .follow-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* Bottom Nav Mobile */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(12,12,14,0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+      z-index: 100;
+      justify-content: space-around;
+    }
+    .bottom-nav .nav-item {
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .bottom-nav .nav-item svg { width: 24px; height: 24px; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .modal-body { padding: 16px 20px; max-height: 60vh; overflow-y: auto; }
+    .comment-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .comment-item strong { font-weight: 700; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--bg-elevated);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      border: 1px solid var(--border);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 300;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: var(--nav-width) 1fr; }
+      .right-sidebar { display: none; }
+    }
+    @media (max-width: 768px) {
+      .app { grid-template-columns: 1fr; }
+      .left-nav { display: none; }
+      .top-bar { display: flex; }
+      .bottom-nav { display: flex; }
+      .main { padding: 0 0 90px; }
+      .post { border-radius: 0; border-left: none; border-right: none; margin-bottom: 12px; }
+    }
+    @media (min-width: 769px) and (max-width: 1100px) {
+      .main { padding: 0 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Left Navigation -->
+    <aside class="left-nav">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="15" stroke="#d4af37" stroke-width="1.5"/>
+          <path d="M8 18c2-6 6-8 8-8s6 2 8 8" stroke="#d4af37" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <circle cx="16" cy="12" r="2.5" fill="#d4af37"/>
+          <path d="M12 22h8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>VUSLAT</span>
+      </div>
+      <nav style="margin-top: 32px; display: flex; flex-direction: column; gap: 4px;">
+        <a class="nav-item active" data-page="home">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Ana Sayfa
+        </a>
+        <a class="nav-item" data-page="explore">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Keşfet
+        </a>
+        <a class="nav-item" data-page="reels">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          Reels
+        </a>
+        <a class="nav-item" data-page="messages">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Mesajlar
+        </a>
+        <a class="nav-item" data-page="notifications">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Bildirimler
+        </a>
+        <a class="nav-item" data-page="profile">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profil
+        </a>
+      </nav>
+      <button class="create-btn" id="createBtn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Oluştur
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="top-bar">
+        <div class="logo" style="font-size: 20px;">
+          <svg viewBox="0 0 32 32" fill="none" width="28" height="28">
+            <circle cx="16" cy="16" r="15" stroke="#d4af37" stroke-width="1.5"/>
+            <path d="M8 18c2-6 6-8 8-8s6 2 8 8" stroke="#d4af37" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <circle cx="16" cy="12" r="2.5" fill="#d4af37"/>
+          </svg>
+          <span>VUSLAT</span>
+        </div>
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+
+      <div class="stories" id="stories"></div>
+      <div id="feed"></div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="right-sidebar">
+      <div class="profile-card">
+        <img class="profile-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face" alt="Profil">
+        <div class="profile-name">Bilal</div>
+        <div class="profile-handle">@bilalvuslat</div>
+        <div class="profile-stats">
+          <div><strong>128</strong> Gönderi</div>
+          <div><strong>4.2K</strong> Takipçi</div>
+          <div><strong>312</strong> Takip</div>
+        </div>
+      </div>
+      <div class="suggestions">
+        <h3>Senin için öneriler</h3>
+        <div id="suggestions"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a class="nav-item active" data-page="home">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Ana Sayfa
+    </a>
+    <a class="nav-item" data-page="explore">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Keşfet
+    </a>
+    <a class="nav-item" data-page="create">
+      <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Oluştur
+    </a>
+    <a class="nav-item" data-page="messages">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Mesaj
+    </a>
+    <a class="nav-item" data-page="profile">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profil
+    </a>
+  </nav>
+
+  <!-- Comment Modal -->
+  <div class="modal-overlay" id="commentModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Yorumlar</span>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body" id="modalComments"></div>
+      <div class="comment-input-area">
+        <input type="text" class="comment-input" id="modalCommentInput" placeholder="Yorum yaz...">
+        <button class="send-comment" id="modalSendComment">Gönder</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Dummy Data
+    const currentUser = { name: "Bilal", handle: "@bilalvuslat", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face" };
+
+    const stories = [
+      { id: 1, name: "Hikayen", avatar: currentUser.avatar, isOwn: true },
+      { id: 2, name: "Elif", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face" },
+      { id: 3, name: "Ahmet", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" },
+      { id: 4, name: "Zeynep", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face" },
+      { id: 5, name: "Mehmet", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face" },
+      { id: 6, name: "Ayşe", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face" },
+    ];
+
+    let posts = [
+      {
+        id: 1,
+        user: "Elif Demir",
+        handle: "@elifdemir",
+        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
+        image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=800&fit=crop",
+        caption: "İstanbul’da gün batımı… Vuslat anı gibi bir manzara. ✨",
+        likes: 1248,
+        liked: false,
+        comments: [
+          { user: "Ahmet", text: "Muhteşem bir kare!" },
+          { user: "Zeynep", text: "Neredesin tam olarak?" }
+        ],
+        time: "2 saat önce"
+      },
+      {
+        id: 2,
+        user: "Ahmet Kaya",
+        handle: "@ahmetkaya",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+        image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=800&fit=crop",
+        caption: "Yeni projemiz için hazırlıklar devam ediyor. Yakında VUSLAT’ta paylaşacağız.",
+        likes: 892,
+        liked: true,
+        comments: [
+          { user: "Bilal", text: "Heyecanla bekliyoruz!" }
+        ],
+        time: "5 saat önce"
+      },
+      {
+        id: 3,
+        user: "Zeynep Aydın",
+        handle: "@zeynepaydin",
+        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+        image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=800&fit=crop",
+        caption: "Doğanın içinde huzur bulmak… Herkese iyi haftalar dilerim.",
+        likes: 2156,
+        liked: false,
+        comments: [],
+        time: "1 gün önce"
+      }
+    ];
+
+    const suggestions = [
+      { name: "Mehmet Yılmaz", handle: "@mehmety", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face" },
+      { name: "Ayşe Kara", handle: "@aysekara", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face" },
+      { name: "Can Özkan", handle: "@canozkan", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" },
+    ];
+
+    let currentPostId = null;
+
+    // Render Functions
+    function renderStories() {
+      const container = document.getElementById('stories');
+      container.innerHTML = stories.map(s => `
+        <div class="story" data-id="${s.id}">
+          <div class="story-ring">
+            <img class="story-avatar" src="${s.avatar}" alt="${s.name}">
+          </div>
+          <span class="story-name">${s.name}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderFeed() {
+      const container = document.getElementById('feed');
+      container.innerHTML = posts.map(post => `
+        <article class="post" data-id="${post.id}">
+          <div class="post-header">
+            <img class="post-avatar" src="${post.avatar}" alt="${post.user}">
+            <div>
+              <div class="post-user">${post.user}</div>
+              <div style="font-size:13px;color:var(--text-secondary);">${post.handle}</div>
+            </div>
+            <span class="post-time">${post.time}</span>
+          </div>
+          <img class="post-image" src="${post.image}" alt="Gönderi">
+          <div class="post-actions">
+            <button class="action-btn like-btn ${post.liked ? 'liked' : ''}" data-id="${post.id}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="${post.liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              ${post.likes}
+            </button>
+            <button class="action-btn comment-btn" data-id="${post.id}">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              ${post.comments.length}
+            </button>
+            <button class="action-btn share-btn" data-id="${post.id}">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              Paylaş
+            </button>
+          </div>
+          <div class="post-likes">${post.likes} beğeni</div>
+          <div class="post-caption"><strong>${post.user}</strong> ${post.caption}</div>
+          ${post.comments.length > 0 ? `<div class="post-comments-preview comment-btn" data-id="${post.id}">${post.comments.length} yorumun tümünü gör</div>` : ''}
+          <div class="comment-input-area">
+            <input type="text" class="comment-input" placeholder="Yorum ekle..." data-id="${post.id}">
+            <button class="send-comment" data-id="${post.id}">Gönder</button>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function renderSuggestions() {
+      const container = document.getElementById('suggestions');
+      container.innerHTML = suggestions.map(s => `
+        <div class="suggestion-item">
+          <img class="suggestion-avatar" src="${s.avatar}" alt="${s.name}">
+          <div class="suggestion-info">
+            <strong>${s.name}</strong>
+            <span>${s.handle}</span>
+          </div>
+          <button class="follow-btn">Takip Et</button>
+        </div>
+      `).join('');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function openComments(postId) {
+      currentPostId = postId;
+      const post = posts.find(p => p.id === postId);
+      const modal = document.getElementById('commentModal');
+      const body = document.getElementById('modalComments');
+      body.innerHTML = post.comments.length
+        ? post.comments.map(c => `<div class="comment-item"><strong>${c.user}</strong> ${c.text}</div>`).join('')
+        : '<div style="color:var(--text-secondary);text-align:center;padding:20px;">Henüz yorum yok. İlk yorumu sen yap!</div>';
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('commentModal').classList.remove('active');
+      currentPostId = null;
+    }
+
+    // Event Listeners
+    document.addEventListener('click', (e) => {
+      // Like
+      if (e.target.closest('.like-btn')) {
+        const btn = e.target.closest('.like-btn');
+        const id = parseInt(btn.dataset.id);
+        const post = posts.find(p => p.id === id);
+        post.liked = !post.liked;
+        post.likes += post.liked ? 1 : -1;
+        renderFeed();
+      }
+
+      // Open comments
+      if (e.target.closest('.comment-btn')) {
+        const id = parseInt(e.target.closest('.comment-btn').dataset.id);
+        openComments(id);
+      }
+
+      // Share
+      if (e.target.closest('.share-btn')) {
+        const id = parseInt(e.target.closest('.share-btn').dataset.id);
+        navigator.clipboard?.writeText(`https://vuslat.app/post/${id}`).then(() => {
+          showToast('Bağlantı kopyalandı!');
+        }).catch(() => showToast('Paylaşım başarılı!'));
+      }
+
+      // Send comment from feed
+      if (e.target.closest('.send-comment') && !e.target.closest('#modalSendComment')) {
+        const btn = e.target.closest('.send-comment');
+        const id = parseInt(btn.dataset.id);
+        const input = document.querySelector(`.comment-input[data-id="${id}"]`);
+        const text = input.value.trim();
+        if (text) {
+          const post = posts.find(p => p.id === id);
+          post.comments.push({ user: currentUser.name, text });
+          input.value = '';
+          renderFeed();
+          showToast('Yorum eklendi');
+        }
+      }
+
+      // Follow
+      if (e.target.classList.contains('follow-btn')) {
+        e.target.textContent = e.target.textContent === 'Takip Et' ? 'Takip Ediliyor' : 'Takip Et';
+        e.target.style.color = e.target.textContent === 'Takip Ediliyor' ? 'var(--text-secondary)' : 'var(--accent)';
+      }
+
+      // Nav items (demo)
+      if (e.target.closest('.nav-item')) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        e.target.closest('.nav-item').classList.add('active');
+        const page = e.target.closest('.nav-item').dataset.page;
+        if (page && page !== 'home') {
+          showToast(`${page.charAt(0).toUpperCase() + page.slice(1)} sayfası yakında!`);
+        }
+      }
+    });
+
+    // Create button
+    document.getElementById('createBtn').addEventListener('click', () => {
+      showToast('Gönderi oluşturma özelliği yakında eklenecek!');
+    });
+
+    // Modal close
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('commentModal').addEventListener('click', (e) => {
+      if (e.target.id === 'commentModal') closeModal();
+    });
+
+    // Modal send comment
+    document.getElementById('modalSendComment').addEventListener('click', () => {
+      if (!currentPostId) return;
+      const input = document.getElementById('modalCommentInput');
+      const text = input.value.trim();
+      if (text) {
+        const post = posts.find(p => p.id === currentPostId);
+        post.comments.push({ user: currentUser.name, text });
+        input.value = '';
+        openComments(currentPostId);
+        renderFeed();
+        showToast('Yorum eklendi');
+      }
+    });
+
+    // Enter key for comments
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && e.target.classList.contains('comment-input')) {
+        const id = e.target.dataset.id;
+        if (id) {
+          document.querySelector(`.send-comment[data-id="${id}"]`)?.click();
+        } else if (e.target.id === 'modalCommentInput') {
+          document.getElementById('modalSendComment').click();
+        }
+      }
+    });
+
+    // Story click
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.story')) {
+        const story = e.target.closest('.story');
+        showToast(`${story.querySelector('.story-name').textContent} hikayesi açılıyor...`);
+      }
+    });
+
+    // Init
+    renderStories();
+    renderFeed();
+    renderSuggestions();
+  </script>
+</body>
+</html>
