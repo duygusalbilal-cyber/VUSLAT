@@ -1,0 +1,44 @@
+name: Build VUSLAT
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare download package
+        run: |
+          mkdir -p dist
+          cp index.html dist/vuslat.html
+          cd dist
+          zip -r vuslat-app.zip vuslat.html
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vuslat-download
+          path: |
+            dist/vuslat.html
+            dist/vuslat-app.zip
+          retention-days: 30
+
+      - name: Create Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/vuslat.html
+            dist/vuslat-app.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
